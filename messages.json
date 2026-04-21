@@ -1,0 +1,25 @@
+[
+  {
+    "id": "msg_1776728911416",
+    "type": "text",
+    "text": "你好",
+    "username": "yvs",
+    "time": "01:48 AM",
+    "timestamp": 1776728911416,
+    "readBy": [
+      "yvs",
+      "Yvs"
+    ]
+  },
+  {
+    "id": "msg_1776729487391",
+    "type": "text",
+    "text": "hello",
+    "username": "Yvs",
+    "time": "01:58 AM",
+    "timestamp": 1776729487392,
+    "readBy": [
+      "Yvs"
+    ]
+  }
+]

@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Private Chat</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: #ededed;
+      height: 100vh;
+    }
+
+    #loginScreen {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 360px;
+      background: white;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .login-box h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 22px;
+      color: #222;
+    }
+
+    .login-box input {
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .login-box button {
+      width: 100%;
+      padding: 12px;
+      background: #f4c542;
+      color: #222;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #error {
+      margin-top: 10px;
+      color: #e53935;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    #chatScreen {
+      display: none;
+      height: 100vh;
+      flex-direction: column;
+      background: #f5f5f5;
+    }
+
+    .chat-header {
+      height: 60px;
+      background: #ffffff;
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 18px;
+      color: #222;
+      flex-shrink: 0;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .message-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .message-row.me {
+      justify-content: flex-end;
+    }
+
+    .message-row.other {
+      justify-content: flex-start;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: #d8d8d8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: #555;
+      flex-shrink: 0;
+    }
+
+    .bubble-wrap {
+      max-width: 72%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .message-row.me .bubble-wrap {
+      align-items: flex-end;
+    }
+
+    .message-row.other .bubble-wrap {
+      align-items: flex-start;
+    }
+
+    .name {
+      font-size: 12px;
+      color: #888;
+      padding: 0 4px;
+    }
+
+    .bubble {
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: 15px;
+      line-height: 1.4;
+      word-break: break-word;
+      max-width: 100%;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+
+    .message-row.me .bubble {
+      background: #f4c542;
+      color: #222;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-row.other .bubble {
+      background: #ffffff;
+      color: #222;
+      border-bottom-left-radius: 4px;
+    }
+
+    .bubble img {
+      max-width: 240px;
+      width: 100%;
+      border-radius: 10px;
+      display: block;
+    }
+
+    .file-card {
+      display: inline-block;
+      background: rgba(255,255,255,0.55);
+      border-radius: 10px;
+      padding: 10px 12px;
+      min-width: 180px;
+    }
+
+    .message-row.other .file-card {
+      background: #f7f7f7;
+    }
+
+    .file-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      word-break: break-word;
+    }
+
+    .file-link {
+      font-size: 13px;
+      color: #333;
+      text-decoration: underline;
+    }
+
+    .time {
+      font-size: 11px;
+      color: #999;
+      padding: 0 4px;
+    }
+
+    .read-status {
+      font-size: 11px;
+      color: #777;
+      padding: 0 4px;
+    }
+
+    .system {
+      align-self: center;
+      background: rgba(0,0,0,0.06);
+      color: #666;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 12px;
+      margin: 2px 0;
+    }
+
+    .chat-input {
+      background: #ffffff;
+      border-top: 1px solid #e5e5e5;
+      padding: 10px 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .upload-btn {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 20px;
+      background: #f4c542;
+      color: #222;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    #imageInput,
+    #fileInput {
+      display: none;
+    }
+
+    .chat-input input[type="text"] {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      font-size: 15px;
+      outline: none;
+      min-width: 0;
+    }
+
+    .chat-input button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 20px;
+      background: #f4c542;
+      color: #222;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="loginScreen">
+    <div class="login-box">
+      <h2>Private Chat</h2>
+      <input id="username" placeholder="Your name" />
+      <input id="code" placeholder="Access code" />
+      <button onclick="joinChat()">Enter</button>
+      <div id="error"></div>
+    </div>
+  </div>
+
+  <div id="chatScreen">
+    <div class="chat-header">Private Chat</div>
+    <div id="messages"></div>
+
+    <div class="chat-input">
+      <label class="upload-btn" for="imageInput">Photo</label>
+      <input type="file" id="imageInput" accept="image/*" />
+
+      <label class="upload-btn" for="fileInput">File</label>
+      <input type="file" id="fileInput" />
+
+      <input id="msg" type="text" placeholder="Type a message..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let myName = '';
+    let myCode = '';
+    const renderedMessages = new Map();
+
+    function joinChat() {
+      const username = document.getElementById('username').value.trim();
+      const code = document.getElementById('code').value.trim();
+
+      if (!username || !code) {
+        document.getElementById('error').innerText = 'Please enter name and access code';
+        return;
+      }
+
+      myName = username;
+      myCode = code;
+      socket.emit('join', { code, username });
+    }
+
+    socket.on('access-granted', () => {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('chatScreen').style.display = 'flex';
+      document.getElementById('msg').focus();
+    });
+
+    socket.on('access-denied', () => {
+      document.getElementById('error').innerText = 'Wrong access code';
+    });
+
+    socket.on('chat history', (messages) => {
+      document.getElementById('messages').innerHTML = '';
+      renderedMessages.clear();
+      messages.forEach(addChatMessage);
+      markAllVisibleAsRead();
+    });
+
+    function sendMessage() {
+      const input = document.getElementById('msg');
+      const text = input.value.trim();
+      if (!text) return;
+
+      socket.emit('chat message', text);
+      input.value = '';
+      input.focus();
+    }
+
+    document.getElementById('msg').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    async function uploadSelectedFile(file) {
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('username', myName);
+      formData.append('code', myCode);
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Upload failed');
+        }
+      } catch (err) {
+        alert('Upload failed');
+      }
+    }
+
+    document.getElementById('imageInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      await uploadSelectedFile(file);
+      e.target.value = '';
+    });
+
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      await uploadSelectedFile(file);
+      e.target.value = '';
+    });
+
+    function createAvatar(name) {
+      return name ? name.charAt(0).toUpperCase() : '?';
+    }
+
+    function addChatMessage(data) {
+      const messages = document.getElementById('messages');
+
+      const row = document.createElement('div');
+      const isMe = data.username === myName;
+      row.className = isMe ? 'message-row me' : 'message-row other';
+      row.dataset.messageId = data.id;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.innerText = createAvatar(data.username);
+
+      const bubbleWrap = document.createElement('div');
+      bubbleWrap.className = 'bubble-wrap';
+
+      const name = document.createElement('div');
+      name.className = 'name';
+      name.innerText = data.username;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+
+      if (data.type === 'image') {
+        const img = document.createElement('img');
+        img.src = data.imageUrl;
+        img.alt = 'photo';
+        bubble.appendChild(img);
+      } else if (data.type === 'file') {
+        const fileCard = document.createElement('div');
+        fileCard.className = 'file-card';
+
+        const fileName = document.createElement('div');
+        fileName.className = 'file-name';
+        fileName.innerText = data.fileName || 'File';
+
+        const fileLink = document.createElement('a');
+        fileLink.className = 'file-link';
+        fileLink.href = data.fileUrl;
+        fileLink.target = '_blank';
+        fileLink.innerText = 'Open / Download';
+
+        fileCard.appendChild(fileName);
+        fileCard.appendChild(fileLink);
+        bubble.appendChild(fileCard);
+      } else {
+        bubble.innerText = data.text;
+      }
+
+      const time = document.createElement('div');
+      time.className = 'time';
+      time.innerText = data.time || '';
+
+      const readStatus = document.createElement('div');
+      readStatus.className = 'read-status';
+      readStatus.id = `read-${data.id}`;
+      readStatus.innerText = data.readBy && data.readBy.length > 1
+        ? `Read by: ${data.readBy.join(', ')}`
+        : 'Sent';
+
+      bubbleWrap.appendChild(name);
+      bubbleWrap.appendChild(bubble);
+      bubbleWrap.appendChild(time);
+
+      if (isMe) {
+        bubbleWrap.appendChild(readStatus);
+        row.appendChild(bubbleWrap);
+        row.appendChild(avatar);
+      } else {
+        row.appendChild(avatar);
+        row.appendChild(bubbleWrap);
+      }
+
+      messages.appendChild(row);
+      renderedMessages.set(data.id, row);
+      messages.scrollTop = messages.scrollHeight;
+
+      socket.emit('mark-read', { messageId: data.id });
+    }
+
+    function addSystemMessage(data) {
+      const messages = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.className = 'system';
+      div.innerText = `${data.text} · ${data.time}`;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    socket.on('chat message', (data) => {
+      addChatMessage(data);
+    });
+
+    socket.on('system message', (data) => {
+      addSystemMessage(data);
+    });
+
+    socket.on('read-update', ({ messageId, readBy }) => {
+      const el = document.getElementById(`read-${messageId}`);
+      if (el) {
+        el.innerText = readBy && readBy.length > 1
+          ? `Read by: ${readBy.join(', ')}`
+          : 'Sent';
+      }
+    });
+
+    function markAllVisibleAsRead() {
+      renderedMessages.forEach((row, id) => {
+        socket.emit('mark-read', { messageId: id });
+      });
+    }
+
+    window.addEventListener('focus', markAllVisibleAsRead);
+  </script>
+</body>
+</html>
