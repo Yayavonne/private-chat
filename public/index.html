@@ -2,202 +2,776 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Enigma TEST 777</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enigma</title>
   <script src="/socket.io/socket.io.js"></script>
-
   <style>
-    body {
+    * {
+      box-sizing: border-box;
       margin: 0;
-      font-family: Arial;
-      background: #f5f5f5;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    header {
-      background: black;
-      color: gold;
-      padding: 12px;
+    body {
+      background: linear-gradient(180deg, #111 0%, #1b1b1b 100%);
+      height: 100vh;
+      color: #111;
+    }
+
+    #loginScreen {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 380px;
+      background: rgba(255,255,255,0.96);
+      border-radius: 22px;
+      padding: 26px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.28);
+      backdrop-filter: blur(10px);
+    }
+
+    .login-box h2 {
       text-align: center;
-      font-weight: bold;
+      margin-bottom: 18px;
+      font-size: 28px;
+      font-weight: 800;
+      color: #111;
+      letter-spacing: 0.5px;
     }
 
-    #chat {
-      height: 80vh;
+    .login-box p {
+      text-align: center;
+      color: #777;
+      margin-bottom: 18px;
+      font-size: 14px;
+    }
+
+    .login-box input {
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 14px 16px;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .login-box input:focus {
+      border-color: #e0b400;
+      box-shadow: 0 0 0 3px rgba(244, 197, 66, 0.18);
+    }
+
+    .login-box button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      background: #f4c542;
+      color: #111;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    #error {
+      margin-top: 10px;
+      text-align: center;
+      color: #d33;
+      font-size: 14px;
+    }
+
+    #chatScreen {
+      display: none;
+      height: 100vh;
+      flex-direction: column;
+      background: #f6f3ee;
+    }
+
+    .chat-header {
+      height: 68px;
+      background: rgba(255,255,255,0.92);
+      border-bottom: 1px solid #ece7df;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+    }
+
+    .chat-header-inner {
+      text-align: center;
+    }
+
+    .chat-title {
+      font-size: 19px;
+      font-weight: 800;
+      color: #111;
+    }
+
+    .chat-subtitle {
+      margin-top: 2px;
+      font-size: 12px;
+      color: #777;
+    }
+
+    #messages {
+      flex: 1;
       overflow-y: auto;
-      padding: 10px;
+      padding: 16px 14px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
     }
 
-    .msg {
-      max-width: 60%;
-      margin: 6px;
-      padding: 10px;
+    .day-separator {
+      align-self: center;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: #666;
+      background: rgba(0,0,0,0.06);
+      margin: 8px 0;
+    }
+
+    .system {
+      align-self: center;
+      font-size: 12px;
+      color: #666;
+      background: rgba(0,0,0,0.06);
+      padding: 6px 12px;
+      border-radius: 999px;
+    }
+
+    .message-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 9px;
+      width: 100%;
+    }
+
+    .message-row.me {
+      justify-content: flex-end;
+    }
+
+    .message-row.other {
+      justify-content: flex-start;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
       border-radius: 12px;
+      background: #d8d8d8;
+      color: #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .bubble-wrap {
+      max-width: 76%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .message-row.me .bubble-wrap {
+      align-items: flex-end;
+    }
+
+    .message-row.other .bubble-wrap {
+      align-items: flex-start;
+    }
+
+    .name {
+      font-size: 12px;
+      color: #7f7f7f;
+      padding: 0 4px;
+    }
+
+    .bubble {
+      padding: 11px 13px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.42;
+      word-break: break-word;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      position: relative;
+    }
+
+    .message-row.me .bubble {
+      background: #f4c542;
+      color: #111;
+      border-bottom-right-radius: 6px;
+    }
+
+    .message-row.other .bubble {
+      background: #ffffff;
+      color: #111;
+      border-bottom-left-radius: 6px;
+    }
+
+    .bubble.recalled {
+      font-style: italic;
+      opacity: 0.7;
+    }
+
+    .chat-image,
+    .chat-video {
+      display: block;
+      width: 100%;
+      max-width: 260px;
+      border-radius: 12px;
+      cursor: pointer;
+      background: #000;
+    }
+
+    .file-card {
+      min-width: 190px;
+      background: rgba(255,255,255,0.45);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .message-row.other .file-card {
+      background: #f7f7f7;
+    }
+
+    .file-name {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 6px;
       word-break: break-word;
     }
 
-    .me {
-      background: gold;
-      margin-left: auto;
+    .file-link {
+      font-size: 13px;
+      color: #222;
+      text-decoration: underline;
     }
 
-    .other {
-      background: white;
-    }
-
-    img, video {
-      max-width: 200px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    #input {
+    .meta {
       display: flex;
-      padding: 10px;
-      background: white;
+      align-items: center;
+      gap: 8px;
+      padding: 0 4px;
+      min-height: 18px;
     }
 
-    input {
-      flex: 1;
-      padding: 10px;
+    .time,
+    .read-status {
+      font-size: 11px;
+      color: #7f7f7f;
     }
 
-    button {
-      background: gold;
+    .actions {
+      display: flex;
+      gap: 8px;
+      padding: 0 4px;
+    }
+
+    .recall-btn {
       border: none;
-      padding: 10px;
+      background: transparent;
+      color: #666;
+      font-size: 11px;
+      text-decoration: underline;
       cursor: pointer;
+      padding: 0;
     }
 
-    #preview {
+    .chat-input {
+      background: rgba(255,255,255,0.96);
+      border-top: 1px solid #ece7df;
+      padding: 10px 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      backdrop-filter: blur(8px);
+    }
+
+    .upload-btn,
+    .send-btn {
+      border: none;
+      border-radius: 999px;
+      background: #f4c542;
+      color: #111;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 11px 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(244, 197, 66, 0.32);
+    }
+
+    #imageInput,
+    #videoInput,
+    #fileInput {
+      display: none;
+    }
+
+    .chat-input input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      padding: 13px 16px;
+      border: 1px solid #ddd;
+      border-radius: 999px;
+      font-size: 15px;
+      outline: none;
+      background: #fff;
+    }
+
+    .chat-input input[type="text"]:focus {
+      border-color: #e0b400;
+      box-shadow: 0 0 0 3px rgba(244, 197, 66, 0.18);
+    }
+
+    .media-modal {
       position: fixed;
-      top:0;
-      left:0;
-      width:100%;
-      height:100%;
-      background: rgba(0,0,0,0.8);
-      display:none;
-      justify-content:center;
-      align-items:center;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.86);
+      z-index: 9999;
+      padding: 20px;
     }
 
-    #preview img, #preview video {
-      max-width:90%;
-      max-height:90%;
+    .media-modal img,
+    .media-modal video {
+      max-width: 94vw;
+      max-height: 88vh;
+      border-radius: 14px;
+      background: #000;
+    }
+
+    .close-modal {
+      position: absolute;
+      top: 18px;
+      right: 24px;
+      color: #fff;
+      font-size: 34px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    @media (max-width: 640px) {
+      .chat-input {
+        flex-wrap: wrap;
+      }
+
+      .upload-btn,
+      .send-btn {
+        padding: 10px 12px;
+        font-size: 13px;
+      }
+
+      .bubble-wrap {
+        max-width: 82%;
+      }
     }
   </style>
 </head>
-
 <body>
+  <div id="loginScreen">
+    <div class="login-box">
+      <h2>Enigma</h2>
+      <p>Private conversation space</p>
+      <input id="username" placeholder="Your name" />
+      <input id="code" placeholder="Access code" />
+      <button onclick="joinChat()">Enter</button>
+      <div id="error"></div>
+    </div>
+  </div>
 
-<header>Enigma TEST 777</header>
+  <div id="chatScreen">
+    <div class="chat-header">
+      <div class="chat-header-inner">
+        <div class="chat-title">Enigma</div>
+        <div class="chat-subtitle">Secure room</div>
+      </div>
+    </div>
 
-<div id="chat"></div>
+    <div id="messages"></div>
 
-<div id="input">
-  <input id="msg" placeholder="Type message..."/>
-  <input type="file" id="file"/>
-  <button onclick="send()">Send</button>
-</div>
+    <div class="chat-input">
+      <label class="upload-btn" for="imageInput">Photo</label>
+      <input type="file" id="imageInput" accept="image/*" />
 
-<div id="preview" onclick="this.style.display='none'"></div>
+      <label class="upload-btn" for="videoInput">Video</label>
+      <input type="file" id="videoInput" accept="video/*" />
 
-<script>
-const socket = io();
-let username = "User" + Math.floor(Math.random()*1000);
+      <label class="upload-btn" for="fileInput">File</label>
+      <input type="file" id="fileInput" />
 
-socket.on("init", msgs => {
-  msgs.forEach(add);
-});
+      <input id="msg" type="text" placeholder="Type a message..." />
+      <button class="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
 
-socket.on("new-message", add);
+  <div class="media-modal" id="mediaModal">
+    <div class="close-modal" id="closeModal">&times;</div>
+    <div id="modalContent"></div>
+  </div>
 
-socket.on("recall", id => {
-  document.getElementById(id)?.remove();
-});
+  <script>
+    const socket = io();
+    let myName = '';
+    let myCode = '';
+    const renderedMessages = new Map();
+    let lastDayLabel = '';
 
-function send(){
-  let text = document.getElementById("msg").value;
-  if(!text) return;
+    function formatTime(timestamp) {
+      return new Intl.DateTimeFormat([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).format(new Date(timestamp));
+    }
 
-  socket.emit("send-message", {
-    username,
-    text,
-    type:"text"
-  });
+    function formatDay(timestamp) {
+      const d = new Date(timestamp);
+      const today = new Date();
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
 
-  document.getElementById("msg").value="";
-}
+      const sameDate = (a, b) =>
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate();
 
-document.getElementById("file").onchange = async e=>{
-  let file = e.target.files[0];
-  let form = new FormData();
-  form.append("file", file);
+      if (sameDate(d, today)) return 'Today';
+      if (sameDate(d, yesterday)) return 'Yesterday';
 
-  let res = await fetch("/upload",{method:"POST",body:form});
-  let data = await res.json();
+      return new Intl.DateTimeFormat([], {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }).format(d);
+    }
 
-  socket.emit("send-message",{
-    username,
-    type:data.type,
-    url:data.url
-  });
-};
+    function createAvatar(name) {
+      return name ? name.charAt(0).toUpperCase() : '?';
+    }
 
-function add(m){
-  let div = document.createElement("div");
-  div.className = "msg " + (m.username===username?"me":"other");
-  div.id = m.id;
+    function canRecall(message) {
+      return (
+        message.username === myName &&
+        !message.recalled &&
+        Date.now() - message.timestamp <= 60000
+      );
+    }
 
-  if(m.type==="text"){
-    div.innerText = m.text;
-  }
-  else if(m.type==="image"){
-    let img = document.createElement("img");
-    img.src = m.url;
-    img.onclick=()=>preview("image",m.url);
-    div.appendChild(img);
-  }
-  else if(m.type==="video"){
-    let v = document.createElement("video");
-    v.src = m.url;
-    v.onclick=()=>preview("video",m.url);
-    div.appendChild(v);
-  }
+    function appendDaySeparatorIfNeeded(timestamp) {
+      const dayLabel = formatDay(timestamp);
+      if (dayLabel === lastDayLabel) return;
 
-  // 撤回按钮（1分钟内）
-  if(m.username===username){
-    let btn = document.createElement("button");
-    btn.innerText="撤回";
-    btn.style.fontSize="10px";
+      lastDayLabel = dayLabel;
+      const div = document.createElement('div');
+      div.className = 'day-separator';
+      div.innerText = dayLabel;
+      document.getElementById('messages').appendChild(div);
+    }
 
-    btn.onclick=()=>{
-      if(Date.now()-m.time < 60000){
-        socket.emit("recall", m.id);
-      }else{
-        alert("超过1分钟不能撤回");
+    function joinChat() {
+      const username = document.getElementById('username').value.trim();
+      const code = document.getElementById('code').value.trim();
+
+      if (!username || !code) {
+        document.getElementById('error').innerText = 'Please enter name and access code';
+        return;
       }
-    };
 
-    div.appendChild(btn);
-  }
+      myName = username;
+      myCode = code;
+      socket.emit('join', { username, code });
+    }
 
-  document.getElementById("chat").appendChild(div);
-}
+    socket.on('access-granted', () => {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('chatScreen').style.display = 'flex';
+      document.getElementById('msg').focus();
+    });
 
-function preview(type,src){
-  let box = document.getElementById("preview");
-  box.innerHTML="";
+    socket.on('access-denied', () => {
+      document.getElementById('error').innerText = 'Wrong access code';
+    });
 
-  if(type==="image"){
-    box.innerHTML=`<img src="${src}">`;
-  }else{
-    box.innerHTML=`<video src="${src}" controls autoplay></video>`;
-  }
+    socket.on('chat history', messages => {
+      const box = document.getElementById('messages');
+      box.innerHTML = '';
+      renderedMessages.clear();
+      lastDayLabel = '';
 
-  box.style.display="flex";
-}
-</script>
+      messages.forEach(addChatMessage);
+      box.scrollTop = box.scrollHeight;
+    });
 
+    function sendMessage() {
+      const input = document.getElementById('msg');
+      const text = input.value.trim();
+      if (!text) return;
+
+      socket.emit('chat message', text);
+      input.value = '';
+      input.focus();
+    }
+
+    document.getElementById('msg').addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    async function uploadSelectedFile(file) {
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('username', myName);
+      formData.append('code', myCode);
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Upload failed');
+        }
+      } catch {
+        alert('Upload failed');
+      }
+    }
+
+    document.getElementById('imageInput').addEventListener('change', async e => {
+      await uploadSelectedFile(e.target.files[0]);
+      e.target.value = '';
+    });
+
+    document.getElementById('videoInput').addEventListener('change', async e => {
+      await uploadSelectedFile(e.target.files[0]);
+      e.target.value = '';
+    });
+
+    document.getElementById('fileInput').addEventListener('change', async e => {
+      await uploadSelectedFile(e.target.files[0]);
+      e.target.value = '';
+    });
+
+    function openMediaModal(type, src) {
+      const modal = document.getElementById('mediaModal');
+      const content = document.getElementById('modalContent');
+      content.innerHTML = '';
+
+      if (type === 'image') {
+        const img = document.createElement('img');
+        img.src = src;
+        content.appendChild(img);
+      } else if (type === 'video') {
+        const video = document.createElement('video');
+        video.src = src;
+        video.controls = true;
+        video.autoplay = true;
+        content.appendChild(video);
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeMediaModal() {
+      document.getElementById('mediaModal').style.display = 'none';
+      document.getElementById('modalContent').innerHTML = '';
+    }
+
+    document.getElementById('closeModal').addEventListener('click', closeMediaModal);
+    document.getElementById('mediaModal').addEventListener('click', e => {
+      if (e.target.id === 'mediaModal') closeMediaModal();
+    });
+
+    function addChatMessage(message) {
+      appendDaySeparatorIfNeeded(message.timestamp);
+
+      const messages = document.getElementById('messages');
+      const isMe = message.username === myName;
+
+      const row = document.createElement('div');
+      row.className = isMe ? 'message-row me' : 'message-row other';
+      row.dataset.messageId = message.id;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.innerText = createAvatar(message.username);
+
+      const bubbleWrap = document.createElement('div');
+      bubbleWrap.className = 'bubble-wrap';
+
+      const name = document.createElement('div');
+      name.className = 'name';
+      name.innerText = message.username;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+
+      if (message.recalled) {
+        bubble.classList.add('recalled');
+        bubble.innerText = 'This message was recalled';
+      } else if (message.type === 'image') {
+        const img = document.createElement('img');
+        img.src = message.imageUrl;
+        img.className = 'chat-image';
+        img.alt = 'image';
+        img.addEventListener('click', () => openMediaModal('image', message.imageUrl));
+        bubble.appendChild(img);
+      } else if (message.type === 'video') {
+        const video = document.createElement('video');
+        video.src = message.videoUrl;
+        video.className = 'chat-video';
+        video.muted = true;
+        video.playsInline = true;
+        video.addEventListener('click', () => openMediaModal('video', message.videoUrl));
+        bubble.appendChild(video);
+      } else if (message.type === 'file') {
+        const card = document.createElement('div');
+        card.className = 'file-card';
+
+        const fileName = document.createElement('div');
+        fileName.className = 'file-name';
+        fileName.innerText = message.fileName || 'File';
+
+        const link = document.createElement('a');
+        link.className = 'file-link';
+        link.href = message.fileUrl;
+        link.target = '_blank';
+        link.innerText = 'Open / Download';
+
+        card.appendChild(fileName);
+        card.appendChild(link);
+        bubble.appendChild(card);
+      } else {
+        bubble.innerText = message.text;
+      }
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+
+      const time = document.createElement('div');
+      time.className = 'time';
+      time.innerText = formatTime(message.timestamp);
+
+      const readStatus = document.createElement('div');
+      readStatus.className = 'read-status';
+      readStatus.innerText = '';
+
+      meta.appendChild(time);
+      if (isMe) meta.appendChild(readStatus);
+
+      bubbleWrap.appendChild(name);
+      bubbleWrap.appendChild(bubble);
+      bubbleWrap.appendChild(meta);
+
+      if (isMe && canRecall(message)) {
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        const recallBtn = document.createElement('button');
+        recallBtn.className = 'recall-btn';
+        recallBtn.innerText = 'Recall';
+        recallBtn.addEventListener('click', () => {
+          socket.emit('recall-message', { messageId: message.id });
+        });
+
+        actions.appendChild(recallBtn);
+        bubbleWrap.appendChild(actions);
+      }
+
+      if (isMe) {
+        row.appendChild(bubbleWrap);
+        row.appendChild(avatar);
+      } else {
+        row.appendChild(avatar);
+        row.appendChild(bubbleWrap);
+      }
+
+      messages.appendChild(row);
+      renderedMessages.set(message.id, row);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function rerenderAllFromDomData(updatedMessage) {
+      const old = renderedMessages.get(updatedMessage.id);
+      if (!old) return;
+
+      const allRows = Array.from(document.getElementById('messages').children)
+        .filter(node => node.classList.contains('message-row'))
+        .map(node => renderedMessagesInverse(node))
+        .filter(Boolean);
+
+      const idx = allRows.findIndex(m => m.id === updatedMessage.id);
+      if (idx !== -1) allRows[idx] = updatedMessage;
+
+      const box = document.getElementById('messages');
+      box.innerHTML = '';
+      renderedMessages.clear();
+      lastDayLabel = '';
+      allRows.forEach(addChatMessage);
+    }
+
+    function renderedMessagesInverse(row) {
+      for (const [id, element] of renderedMessages.entries()) {
+        if (element === row) return element._messageData;
+      }
+      return null;
+    }
+
+    socket.on('chat message', message => {
+      const rowBefore = document.createElement('div');
+      addChatMessage(message);
+      const row = renderedMessages.get(message.id);
+      if (row) row._messageData = message;
+    });
+
+    socket.on('system message', data => {
+      const div = document.createElement('div');
+      div.className = 'system';
+      div.innerText = `${data.text} · ${formatTime(data.timestamp)}`;
+      document.getElementById('messages').appendChild(div);
+      document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    });
+
+    socket.on('message-recalled', ({ message }) => {
+      const box = document.getElementById('messages');
+      const rows = Array.from(renderedMessages.values()).map(row => row._messageData).filter(Boolean);
+      const idx = rows.findIndex(m => m.id === message.id);
+      if (idx !== -1) rows[idx] = message;
+
+      box.innerHTML = '';
+      renderedMessages.clear();
+      lastDayLabel = '';
+      rows.forEach(msg => {
+        addChatMessage(msg);
+        const row = renderedMessages.get(msg.id);
+        if (row) row._messageData = msg;
+      });
+    });
+
+    socket.on('recall-failed', ({ reason }) => {
+      alert(reason);
+    });
+  </script>
 </body>
 </html>
